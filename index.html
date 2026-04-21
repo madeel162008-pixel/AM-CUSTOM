@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>AM Studio | Bespoke Shirt Designer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Montserrat:wght@300;400;500;600&family=Great+Vibes&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+        body {
+            background: #0a0c12;
+            font-family: 'Montserrat', 'Segoe UI', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+        }
+        /* Intro animation (unchanged) */
+        .intro-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 30% 20%, #0f0c1f, #020108);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            backdrop-filter: blur(12px);
+            transition: opacity 1.4s cubic-bezier(0.16, 1, 0.3, 1), visibility 0s 1.4s;
+            opacity: 1;
+            visibility: visible;
+            overflow: hidden;
+        }
+        .intro-overlay.hide {
+            opacity: 0;
+            visibility: hidden;
+        }
+        .intro-overlay::before {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            top: -50%;
+            left: -50%;
+            background: radial-gradient(circle, rgba(212,175,55,0.12) 0%, rgba(0,0,0,0) 70%);
+            animation: rotateGold 18s infinite linear;
+            pointer-events: none;
+        }
+        @keyframes rotateGold {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .luxury-text {
+            text-align: center;
+            transform: scale(0.85);
+            animation: luxuryGlow 2s ease-out forwards, floatIn 1.5s cubic-bezier(0.2, 0.9, 0.4, 1.1) forwards;
+            position: relative;
+            z-index: 2;
+        }
+        .luxury-text h2 {
+            font-size: 3.2rem;
+            letter-spacing: 6px;
+            background: linear-gradient(135deg, #f7e6b3, #dbb42c, #f7e6b3, #c9a53b);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 25px rgba(212, 175, 55, 0.4);
+            font-weight: 700;
+            font-family: 'Playfair Display', serif;
+            margin-bottom: 20px;
+            animation: shimmerText 3s ease infinite;
+        }
+        @keyframes shimmerText {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .luxury-text p {
+            color: #e9dfb0;
+            font-size: 1rem;
+            letter-spacing: 8px;
+            font-weight: 300;
+            text-transform: uppercase;
+        }
+        .gold-divider {
+            width: 100px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #e4c56d, #ffdd99, #e4c56d, transparent);
+            margin: 20px auto;
+            border-radius: 4px;
+            animation: pulseGold 1.5s infinite alternate;
+        }
+        @keyframes pulseGold {
+            0% { opacity: 0.3; width: 80px; }
+            100% { opacity: 1; width: 140px; }
+        }
+        @keyframes luxuryGlow {
+            0% { opacity: 0; filter: blur(8px);}
+            30% { opacity: 1; filter: blur(0px);}
+            100% { opacity: 1; text-shadow: 0 0 20px rgba(212,175,55,0.6);}
+        }
+        @keyframes floatIn {
+            0% { transform: scale(0.7) translateY(40px); opacity: 0; }
+            100% { transform: scale(1) translateY(0); opacity: 1; }
+        }
+        .designer-container {
+            max-width: 1350px;
+            width: 100%;
+            background: rgba(15, 18, 25, 0.85);
+            backdrop-filter: blur(12px);
+            border-radius: 2.5rem;
+            box-shadow: 0 30px 50px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(212, 175, 55, 0.2);
+            padding: 1.5rem;
+            transition: opacity 0.8s ease, transform 0.7s ease;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        .designer-container.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .main-heading h1 {
+            font-size: 2.2rem;
+            background: linear-gradient(120deg, #f3e5ab, #dbb42c, #f7e5b3);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-align: center;
+            font-family: 'Playfair Display', serif;
+        }
+        .gold-sub {
+            width: 100px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #d4af37, transparent);
+            margin: 8px auto 0 auto;
+        }
+        .sub {
+            color: #cdc9c0;
+            text-align: center;
+            margin-bottom: 1.8rem;
+        }
+        .flex-main {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.8rem;
+        }
+        .canvas-area {
+            flex: 2;
+            min-width: 280px;
+            background: #13161f;
+            border-radius: 2rem;
+            padding: 1rem;
+            box-shadow: 0 12px 28px rgba(0,0,0,0.5);
+            text-align: center;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+        }
+        .canvas-wrapper {
+            position: relative;
+            display: inline-block;
+            border-radius: 20px;
+            background: #0b0d12;
+        }
+        canvas {
+            display: block;
+            margin: 0 auto;
+            border-radius: 20px;
+            cursor: grab;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            background: #f0efe7;
+            width: 100%;
+            height: auto;
+        }
+        canvas:active { cursor: grabbing; }
+        .tools-panel {
+            flex: 1.2;
+            min-width: 270px;
+            background: rgba(20, 24, 34, 0.8);
+            backdrop-filter: blur(8px);
+            border-radius: 1.8rem;
+            padding: 1.2rem;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+        }
+        .section {
+            background: rgba(10, 12, 18, 0.7);
+            border-radius: 1.2rem;
+            padding: 0.9rem 1rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(212, 175, 55, 0.25);
+        }
+        .section-title {
+            font-weight: 700;
+            margin-bottom: 0.8rem;
+            color: #ecd88f;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-left: 3px solid #d4af37;
+            padding-left: 10px;
+        }
+        .shirt-selector {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .shirt-btn {
+            background: #1e2433;
+            border: 1px solid #3e3a4a;
+            border-radius: 60px;
+            padding: 6px 16px;
+            font-weight: 600;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: 0.2s;
+            color: #e2dccd;
+        }
+        .shirt-btn.active {
+            border-color: #d4af37;
+            background: #2a2a35;
+            color: #ffecb3;
+            box-shadow: 0 0 8px rgba(212, 175, 55, 0.4);
+        }
+        .design-thumbs {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 6px;
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 5px;
+        }
+        .design-thumb {
+            width: 60px;
+            height: 60px;
+            background: #1e1f2c;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: 0.2s;
+            border: 2px solid #464a5c;
+            padding: 5px;
+        }
+        .design-thumb img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        .text-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .ctrl-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        label {
+            font-weight: 600;
+            font-size: 0.7rem;
+            color: #c9c2aa;
+        }
+        input, select, button {
+            border-radius: 40px;
+            border: 1px solid #4a4f62;
+            padding: 8px 12px;
+            font-size: 0.75rem;
+            background: #0f1119;
+            color: #f0ebdd;
+        }
+        input[type="range"] {
+            width: 140px;
+            padding: 0;
+        }
+        button {
+            background: #232837;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        button.primary {
+            background: #b48c2c;
+            border: none;
+            color: #121212;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(180, 140, 44, 0.5);
+        }
+        button.primary:hover { background: #d9aa3a; transform: translateY(-2px); }
+        button.danger { background: #3c2a2a; border-color: #aa4a4a; color: #ffb4b4; }
+        .selected-badge {
+            background: #2a2c3b;
+            border-radius: 30px;
+            padding: 5px 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #ecd88f;
+        }
+        footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 0.7rem;
+            color: #8f8c80;
+            border-top: 1px solid rgba(212, 175, 55, 0.2);
+            padding-top: 12px;
+        }
+    </style>
+</head>
+<body>
+<div id="introOverlay" class="intro-overlay">
+    <div class="luxury-text">
+        <h2>CUSTOMIZE YOUR FASHION<br>WITH AM STUDIO</h2>
+        <div class="gold-divider"></div>
+        <p>✦ BESPOKE CRAFTSMANSHIP ✦</p>
+    </div>
+</div>
+<div id="designerContainer" class="designer-container">
+    <div class="main-heading"><h1>CUSTOMIZE YOUR FASHION WITH AM STUDIO</h1><div class="gold-sub"></div></div>
+    <div class="sub">✧ Drag | Drop | Personalize — every detail reflects you ✧</div>
+    <div class="flex-main">
+        <div class="canvas-area">
+            <div class="canvas-wrapper"><canvas id="shirtCanvas" width="550" height="550" style="width:100%; height:auto; max-width:550px; aspect-ratio:1/1"></canvas></div>
+            <div style="margin-top: 12px; display: flex; justify-content: center; gap: 12px; flex-wrap: wrap;">
+                <span class="selected-badge" id="selectedLabel">⚜️ No element selected</span>
+                <button id="deleteSelectedBtn" class="danger">🗑️ Delete selected</button>
+            </div>
+        </div>
+        <div class="tools-panel">
+            <div class="section">
+                <div class="section-title">✍️ TEXT STUDIO</div>
+                <div class="text-controls">
+                    <button id="addTextBtn" style="background:#2f3547;">➕ Add New Text Element</button>
+                    <div class="ctrl-row"><label>Text:</label><input type="text" id="textContentInput" placeholder="Your message..." style="flex:1"></div>
+                    <div class="ctrl-row"><label>Font:</label><select id="fontSelect"><option value="'Playfair Display', serif">Playfair Display</option><option value="'Montserrat', sans-serif">Montserrat</option><option value="'Great Vibes', cursive">Great Vibes</option><option value="'Poppins', sans-serif">Poppins</option><option value="Arial, sans-serif">Arial</option><option value="'Georgia', serif">Georgia</option></select></div>
+                    <div class="ctrl-row"><label>Size: <span id="sizeValue">36</span>px</label><input type="range" id="fontSizeSlider" min="16" max="80" value="36" step="1"><input type="number" id="fontSizeNumber" value="36" min="16" max="80" style="width: 65px;"></div>
+                    <div class="ctrl-row"><label>Color:</label><input type="color" id="textColorInput" value="#ecd88f"><button id="applyTextPropsBtn">Apply to selected</button></div>
+                    <div class="ctrl-row"><button id="autoApplySizeBtn" style="background:#3b4a5a; flex:1;">✔️ Auto-apply ON</button></div>
+                </div>
+            </div>
+            <div class="section">
+                <div class="section-title">🎨 PREMIUM SHIRT COLORS</div>
+                <div class="shirt-selector" id="shirtSelector"></div>
+                <div style="font-size: 10px; margin-top: 8px; color:#a9a48b;">click to change base</div>
+            </div>
+            <div class="section">
+                <div class="section-title">✨ EMBELLISHMENTS (click to add)</div>
+                <div class="design-thumbs" id="designList"></div>
+            </div>
+            <div class="section">
+                <div class="section-title">📐 DESIGN SIZE ADJUST</div>
+                <div class="ctrl-row">
+                    <label>Size (px):</label>
+                    <input type="range" id="designSizeSlider" min="20" max="200" value="56" step="1">
+                    <input type="number" id="designSizeNumber" value="56" min="20" max="200" style="width: 70px;">
+                </div>
+                <button id="applyDesignSizeBtn" style="margin-top: 8px;">Apply to Selected Design</button>
+            </div>
+            <div class="section">
+                <div class="section-title">📬 FINALIZE MASTERPIECE</div>
+                <button id="doneBtn" class="primary" style="width:100%; padding:12px;">✨ DONE ✨</button>
+            </div>
+        </div>
+    </div>
+    <footer>🖱️ Drag any element • select to edit • resize designs with slider</footer>
+</div>
+
+<script>
+    // SHIRT COLORS - Light Grey image fixed
+    const shirtImages = [
+        { name: "Dark Green", url: "https://i.postimg.cc/Y9v1f8gm/plain-dark-green-t-shirt-front-and-back-side-mockup-template-isolated-on-transparent-background-png.webp" },
+        { name: "Black", url: "https://i.postimg.cc/y8V1rCCc/black-t-shirts-front-and-back-use-for-design-isolated-on-white-background-free-photo.jpg" },
+        { name: "White", url: "https://i.postimg.cc/mrnTDc1W/white-t-shirt-template-template-front-and-back-view-vector.jpg" },
+        { name: "Navy Blue", url: "https://i.postimg.cc/bwNP90Qc/navy-blue-tshirt-mockup-front-600nw-2681435363.webp" },
+        { name: "Light Grey", url: "https://i.postimg.cc/7P3yvt9r/grey-crew-neck-t-shirt-mockup-front-and-back-views-detailed-texture-photo.jpg" }, // corrected
+        { name: "Light Blue", url: "https://i.postimg.cc/7LFjdSJt/78ae32dc36607864e6bb6d33052c2d56.jpg" }
+    ];
+
+    // ===== EMBELLISHMENTS: removed emb2 and emb5, keeping only 6 designs =====
+    const designAssets = [
+        { id: "emb1", name: "Design 1", imgSrc: "https://i.postimg.cc/ydMjVzmW/ei-1776749686700-removebg-preview.png" },
+        { id: "emb3", name: "Design 3", imgSrc: "https://i.postimg.cc/sDRmqsfT/ei-1776749699760-removebg-preview.png" },
+        { id: "emb4", name: "Design 4", imgSrc: "https://i.postimg.cc/Przyk9PJ/ei-1776749707100-removebg-preview.png" },
+        { id: "emb6", name: "Design 6", imgSrc: "https://i.postimg.cc/856dXn25/ei-1776749778299-removebg-preview.png" },
+        { id: "emb7", name: "Design 7", imgSrc: "https://i.postimg.cc/xTRvZm45/ei-1776749795750-removebg-preview.png" },
+        { id: "emb8", name: "Design 8", imgSrc: "https://i.postimg.cc/K88PhY6V/ei-1776749789161-removebg-preview.png" }
+    ];
+
+    const canvas = document.getElementById('shirtCanvas');
+    const ctx = canvas.getContext('2d');
+    let currentShirtIndex = 0;
+    let shirtImageObj = new Image();
+    let objects = [];
+    let nextId = 100;
+    let selectedId = null;
+    let isDragging = false;
+    let dragOffsetX = 0, dragOffsetY = 0;
+    let loadedDesigns = {};
+    let designLoadStatus = {};
+
+    // Preload all designs
+    function loadDesignImages() {
+        return Promise.all(designAssets.map(design => {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.crossOrigin = "Anonymous";
+                designLoadStatus[design.id] = 'loading';
+                img.onload = () => {
+                    loadedDesigns[design.id] = img;
+                    designLoadStatus[design.id] = 'loaded';
+                    drawCanvas();
+                    resolve(true);
+                };
+                img.onerror = (err) => {
+                    console.warn(`Failed to load ${design.id}: ${design.imgSrc}`);
+                    const fallbackCanvas = document.createElement('canvas');
+                    fallbackCanvas.width = 100;
+                    fallbackCanvas.height = 100;
+                    const fctx = fallbackCanvas.getContext('2d');
+                    fctx.fillStyle = '#d4af37';
+                    fctx.fillRect(0, 0, 100, 100);
+                    fctx.fillStyle = '#000';
+                    fctx.font = 'bold 14px sans-serif';
+                    fctx.fillText('✨', 40, 55);
+                    const fallbackImg = new Image();
+                    fallbackImg.src = fallbackCanvas.toDataURL();
+                    fallbackImg.onload = () => {
+                        loadedDesigns[design.id] = fallbackImg;
+                        designLoadStatus[design.id] = 'fallback';
+                        drawCanvas();
+                        resolve(false);
+                    };
+                };
+                img.src = design.imgSrc;
+            });
+        }));
+    }
+
+    function drawShirtWithFit() {
+        if (!shirtImageObj.complete || shirtImageObj.naturalWidth === 0) return false;
+        const imgW = shirtImageObj.naturalWidth, imgH = shirtImageObj.naturalHeight;
+        const canvasW = canvas.width, canvasH = canvas.height;
+        const scale = Math.min(canvasW / imgW, canvasH / imgH);
+        const drawW = imgW * scale, drawH = imgH * scale;
+        const offsetX = (canvasW - drawW) / 2, offsetY = (canvasH - drawH) / 2;
+        ctx.drawImage(shirtImageObj, offsetX, offsetY, drawW, drawH);
+        return true;
+    }
+
+    function drawDesignPreserveAspect(img, x, y, targetW, targetH) {
+        if (!img || !img.complete) return false;
+        const imgW = img.naturalWidth;
+        const imgH = img.naturalHeight;
+        if (imgW === 0 || imgH === 0) return false;
+        const scaleW = targetW / imgW;
+        const scaleH = targetH / imgH;
+        const scale = Math.min(scaleW, scaleH);
+        const drawW = imgW * scale;
+        const drawH = imgH * scale;
+        const offsetX = x + (targetW - drawW) / 2;
+        const offsetY = y + (targetH - drawH) / 2;
+        ctx.drawImage(img, offsetX, offsetY, drawW, drawH);
+        return true;
+    }
+
+    function drawCanvas() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (shirtImageObj.complete && shirtImageObj.naturalWidth > 0) drawShirtWithFit();
+        else {
+            ctx.fillStyle = "#2a2e3b";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#c0b79a";
+            ctx.font = "14px 'Montserrat'";
+            ctx.fillText("loading luxurious fabric...", canvas.width/2-80, canvas.height/2);
+        }
+        for (let obj of objects) {
+            if (obj.type === 'text') {
+                ctx.save();
+                ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
+                ctx.fillStyle = obj.color;
+                ctx.fillText(obj.text, obj.x, obj.y);
+                if (selectedId === obj.id) {
+                    const metrics = ctx.measureText(obj.text);
+                    ctx.strokeStyle = "#d4af37";
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([6, 8]);
+                    ctx.strokeRect(obj.x - 4, obj.y - obj.fontSize*1.2 + 5, metrics.width + 8, obj.fontSize*1.2 + 4);
+                    ctx.setLineDash([]);
+                }
+                ctx.restore();
+            } 
+            else if (obj.type === 'design') {
+                const designImg = loadedDesigns[obj.designId];
+                if (designImg && (designImg.complete || designLoadStatus[obj.designId] !== 'loading')) {
+                    drawDesignPreserveAspect(designImg, obj.x, obj.y, obj.width, obj.height);
+                    if (selectedId === obj.id) {
+                        ctx.strokeStyle = "#d4af37";
+                        ctx.lineWidth = 2.5;
+                        ctx.setLineDash([5, 5]);
+                        ctx.strokeRect(obj.x - 3, obj.y - 3, obj.width + 6, obj.height + 6);
+                        ctx.setLineDash([]);
+                    }
+                } else {
+                    ctx.fillStyle = "#554c2e";
+                    ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
+                    ctx.fillStyle = "#ecd88f";
+                    ctx.font = "12px sans-serif";
+                    ctx.fillText("⏳", obj.x+obj.width/2-6, obj.y+obj.height/2+4);
+                }
+            }
+        }
+    }
+
+    function loadShirt(index) {
+        currentShirtIndex = index;
+        shirtImageObj = new Image();
+        shirtImageObj.crossOrigin = "Anonymous";
+        shirtImageObj.onload = () => drawCanvas();
+        shirtImageObj.onerror = () => drawCanvas();
+        shirtImageObj.src = shirtImages[index].url;
+    }
+
+    function refreshCanvas() { drawCanvas(); }
+
+    function findObjectAt(px, py) {
+        for (let i = objects.length-1; i >= 0; i--) {
+            const obj = objects[i];
+            if (obj.type === 'text') {
+                ctx.save();
+                ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
+                const metrics = ctx.measureText(obj.text);
+                const width = metrics.width, height = obj.fontSize * 1.2;
+                const left = obj.x - 4, top = obj.y - height + 5, right = left + width + 8, bottom = top + height + 4;
+                ctx.restore();
+                if (px >= left && px <= right && py >= top && py <= bottom) return obj;
+            } 
+            else if (obj.type === 'design') {
+                if (px >= obj.x && px <= obj.x+obj.width && py >= obj.y && py <= obj.y+obj.height) return obj;
+            }
+        }
+        return null;
+    }
+
+    function getCanvasCoords(e) {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width, scaleY = canvas.height / rect.height;
+        let clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        let clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        let canvasX = (clientX - rect.left) * scaleX;
+        let canvasY = (clientY - rect.top) * scaleY;
+        canvasX = Math.min(Math.max(0, canvasX), canvas.width);
+        canvasY = Math.min(Math.max(0, canvasY), canvas.height);
+        return { mx: canvasX, my: canvasY };
+    }
+
+    function onMouseDown(e) {
+        e.preventDefault();
+        const { mx, my } = getCanvasCoords(e);
+        const clicked = findObjectAt(mx, my);
+        if (clicked) {
+            selectedId = clicked.id;
+            isDragging = true;
+            dragOffsetX = mx - clicked.x;
+            dragOffsetY = my - clicked.y;
+            refreshCanvas();
+            updateUIForSelected();
+        } else {
+            selectedId = null;
+            refreshCanvas();
+            updateUIForSelected();
+        }
+    }
+
+    function onMouseMove(e) {
+        if (!isDragging || selectedId === null) return;
+        e.preventDefault();
+        const { mx, my } = getCanvasCoords(e);
+        const obj = objects.find(o => o.id === selectedId);
+        if (obj) {
+            let newX = mx - dragOffsetX, newY = my - dragOffsetY;
+            if (obj.type === 'text') {
+                ctx.save();
+                ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
+                const textWidth = ctx.measureText(obj.text).width;
+                ctx.restore();
+                newX = Math.min(Math.max(5, newX), canvas.width - textWidth - 5);
+                newY = Math.min(Math.max(obj.fontSize + 5, newY), canvas.height - 12);
+                obj.x = newX; obj.y = newY;
+            } else if (obj.type === 'design') {
+                newX = Math.min(Math.max(5, newX), canvas.width - obj.width - 5);
+                newY = Math.min(Math.max(5, newY), canvas.height - obj.height - 5);
+                obj.x = newX; obj.y = newY;
+            }
+            refreshCanvas();
+        }
+    }
+
+    function onMouseUp() { isDragging = false; refreshCanvas(); }
+
+    function addNewText() {
+        objects.push({ id: nextId++, type: 'text', text: 'LUXURY', fontFamily: "'Playfair Display', serif", fontSize: 36, color: '#ecd88f', x: canvas.width/2-60, y: canvas.height/2 });
+        selectedId = objects[objects.length-1].id;
+        refreshCanvas();
+        updateUIForSelected();
+        syncTextInputsWithSelected();
+    }
+
+    function addDesign(designId) {
+        const defaultSize = 56;
+        objects.push({ id: nextId++, type: 'design', designId: designId, x: canvas.width/2 - defaultSize/2, y: canvas.height/2 - defaultSize/2, width: defaultSize, height: defaultSize });
+        selectedId = objects[objects.length-1].id;
+        refreshCanvas();
+        updateUIForSelected();
+        document.getElementById('designSizeSlider').value = defaultSize;
+        document.getElementById('designSizeNumber').value = defaultSize;
+    }
+
+    function deleteSelected() {
+        if (selectedId !== null) {
+            objects = objects.filter(obj => obj.id !== selectedId);
+            selectedId = null;
+            refreshCanvas();
+            updateUIForSelected();
+        }
+    }
+
+    function applyToSelectedText() {
+        if (selectedId === null) return;
+        const obj = objects.find(o => o.id === selectedId);
+        if (!obj || obj.type !== 'text') return;
+        let newText = document.getElementById('textContentInput').value.trim();
+        if (newText !== "") obj.text = newText;
+        obj.fontFamily = document.getElementById('fontSelect').value;
+        obj.fontSize = parseInt(document.getElementById('fontSizeSlider').value, 10);
+        document.getElementById('sizeValue').innerText = obj.fontSize;
+        document.getElementById('fontSizeNumber').value = obj.fontSize;
+        obj.color = document.getElementById('textColorInput').value;
+        refreshCanvas();
+    }
+
+    let autoApply = true;
+    function setupSizeControls() {
+        const slider = document.getElementById('fontSizeSlider'), numberInput = document.getElementById('fontSizeNumber'), sizeSpan = document.getElementById('sizeValue');
+        function updateSize(value) {
+            sizeSpan.innerText = value;
+            numberInput.value = value;
+            if (autoApply && selectedId !== null) {
+                const obj = objects.find(o => o.id === selectedId);
+                if (obj && obj.type === 'text') { obj.fontSize = value; refreshCanvas(); }
+            }
+        }
+        slider.addEventListener('input', (e) => updateSize(parseInt(e.target.value,10)));
+        numberInput.addEventListener('change', (e) => {
+            let val = parseInt(e.target.value,10);
+            if (isNaN(val)) val = 36;
+            val = Math.min(80, Math.max(16, val));
+            slider.value = val;
+            updateSize(val);
+        });
+        document.getElementById('autoApplySizeBtn').onclick = () => {
+            autoApply = !autoApply;
+            document.getElementById('autoApplySizeBtn').style.background = autoApply ? "#3b4a5a" : "#2f3547";
+            document.getElementById('autoApplySizeBtn').innerText = autoApply ? "✔️ Auto-apply ON" : "⏸ Auto-apply OFF";
+        };
+    }
+
+    function setupDesignSizeControls() {
+        const sizeSlider = document.getElementById('designSizeSlider'), sizeNumber = document.getElementById('designSizeNumber');
+        const applyBtn = document.getElementById('applyDesignSizeBtn');
+        function updateDesignSize(newSize) {
+            if (selectedId !== null) {
+                const obj = objects.find(o => o.id === selectedId);
+                if (obj && obj.type === 'design') {
+                    obj.width = newSize;
+                    obj.height = newSize;
+                    refreshCanvas();
+                }
+            }
+        }
+        sizeSlider.addEventListener('input', (e) => { sizeNumber.value = e.target.value; });
+        sizeNumber.addEventListener('change', (e) => {
+            let val = parseInt(e.target.value,10);
+            if (isNaN(val)) val = 56;
+            val = Math.min(200, Math.max(20, val));
+            sizeSlider.value = val;
+        });
+        applyBtn.addEventListener('click', () => updateDesignSize(parseInt(sizeSlider.value,10)));
+    }
+
+    function syncTextInputsWithSelected() {
+        const obj = objects.find(o => o.id === selectedId);
+        if (obj && obj.type === 'text') {
+            document.getElementById('textContentInput').value = obj.text;
+            document.getElementById('fontSelect').value = obj.fontFamily;
+            document.getElementById('fontSizeSlider').value = obj.fontSize;
+            document.getElementById('fontSizeNumber').value = obj.fontSize;
+            document.getElementById('sizeValue').innerText = obj.fontSize;
+            document.getElementById('textColorInput').value = obj.color;
+        } else document.getElementById('textContentInput').value = "";
+    }
+
+    function updateUIForSelected() {
+        const obj = objects.find(o => o.id === selectedId);
+        const labelSpan = document.getElementById('selectedLabel');
+        if (!obj) { labelSpan.innerHTML = "⚜️ No element selected"; return; }
+        if (obj.type === 'text') {
+            labelSpan.innerHTML = `✒️ Text: "${obj.text.substring(0,22)}"`;
+            syncTextInputsWithSelected();
+        } else {
+            labelSpan.innerHTML = `🏷️ Embellishment: ${obj.designId}`;
+            document.getElementById('textContentInput').value = "";
+            document.getElementById('designSizeSlider').value = obj.width;
+            document.getElementById('designSizeNumber').value = obj.width;
+        }
+    }
+
+    const GOOGLE_SHEETS_WEBAPP_URL = "";
+    async function sendToGoogleSheets() {
+        const shirtName = shirtImages[currentShirtIndex].name;
+        const elements = objects.map(obj => obj.type === 'text' ? 
+            { type: 'text', content: obj.text, font: obj.fontFamily, size: obj.fontSize, color: obj.color, position: { x: Math.round(obj.x), y: Math.round(obj.y) } } :
+            { type: 'design', designId: obj.designId, position: { x: Math.round(obj.x), y: Math.round(obj.y) }, size: { w: obj.width, h: obj.height } }
+        );
+        const payload = { timestamp: new Date().toISOString(), shirtColor: shirtName, customization: elements, totalElements: objects.length };
+        if (!GOOGLE_SHEETS_WEBAPP_URL) {
+            alert("✨ Preview:\n" + JSON.stringify(payload, null, 2) + "\n\nSet web app URL to enable Google Sheets.");
+            console.log(payload);
+            return;
+        }
+        try { await fetch(GOOGLE_SHEETS_WEBAPP_URL, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); alert("✅ Sent!"); } 
+        catch(err) { alert("Error: "+err.message); }
+    }
+
+    function initUI() {
+        const shirtContainer = document.getElementById('shirtSelector');
+        shirtImages.forEach((shirt, idx) => {
+            const btn = document.createElement('button');
+            btn.className = `shirt-btn ${idx === currentShirtIndex ? 'active' : ''}`;
+            btn.innerText = shirt.name;
+            btn.onclick = () => {
+                document.querySelectorAll('.shirt-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                loadShirt(idx);
+            };
+            shirtContainer.appendChild(btn);
+        });
+        const designDiv = document.getElementById('designList');
+        designAssets.forEach(design => {
+            const thumb = document.createElement('div');
+            thumb.className = 'design-thumb';
+            const img = document.createElement('img');
+            img.src = design.imgSrc;
+            img.style.width = '100%';
+            img.style.height = '100%';
+            img.style.objectFit = 'contain';
+            thumb.appendChild(img);
+            thumb.onclick = () => addDesign(design.id);
+            designDiv.appendChild(thumb);
+        });
+        document.getElementById('addTextBtn').onclick = addNewText;
+        document.getElementById('deleteSelectedBtn').onclick = deleteSelected;
+        document.getElementById('applyTextPropsBtn').onclick = applyToSelectedText;
+        document.getElementById('doneBtn').onclick = sendToGoogleSheets;
+        canvas.addEventListener('mousedown', onMouseDown);
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mouseup', onMouseUp);
+        canvas.addEventListener('touchstart', onMouseDown);
+        window.addEventListener('touchmove', onMouseMove);
+        window.addEventListener('touchend', onMouseUp);
+        setupSizeControls();
+        setupDesignSizeControls();
+    }
+
+    function initDemoObjects() {
+        objects = [];
+        objects.push({ id: nextId++, type: 'text', text: 'LUXURY', fontFamily: "'Playfair Display', serif", fontSize: 42, color: '#d4af37', x: 200, y: 280 });
+        objects.push({ id: nextId++, type: 'design', designId: 'emb1', x: 400, y: 380, width: 56, height: 56 });
+        selectedId = null;
+    }
+
+    window.addEventListener('load', async () => {
+        await loadDesignImages();
+        initDemoObjects();
+        loadShirt(0);
+        initUI();
+        refreshCanvas();
+        setTimeout(() => {
+            document.getElementById('introOverlay').classList.add('hide');
+            document.getElementById('designerContainer').classList.add('visible');
+        }, 2400);
+    });
+</script>
+</body>
+</html>
