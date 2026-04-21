@@ -22,7 +22,6 @@
             padding: 20px;
             position: relative;
         }
-        /* Intro animation (unchanged) */
         .intro-overlay {
             position: fixed;
             top: 0;
@@ -375,17 +374,17 @@
 </div>
 
 <script>
-    // SHIRT COLORS - Light Grey image fixed
+    // SHIRT COLORS
     const shirtImages = [
         { name: "Dark Green", url: "https://i.postimg.cc/Y9v1f8gm/plain-dark-green-t-shirt-front-and-back-side-mockup-template-isolated-on-transparent-background-png.webp" },
         { name: "Black", url: "https://i.postimg.cc/y8V1rCCc/black-t-shirts-front-and-back-use-for-design-isolated-on-white-background-free-photo.jpg" },
         { name: "White", url: "https://i.postimg.cc/mrnTDc1W/white-t-shirt-template-template-front-and-back-view-vector.jpg" },
         { name: "Navy Blue", url: "https://i.postimg.cc/bwNP90Qc/navy-blue-tshirt-mockup-front-600nw-2681435363.webp" },
-        { name: "Light Grey", url: "https://i.postimg.cc/7P3yvt9r/grey-crew-neck-t-shirt-mockup-front-and-back-views-detailed-texture-photo.jpg" }, // corrected
+        { name: "Light Grey", url: "https://i.postimg.cc/7P3yvt9r/grey-crew-neck-t-shirt-mockup-front-and-back-views-detailed-texture-photo.jpg" },
         { name: "Light Blue", url: "https://i.postimg.cc/7LFjdSJt/78ae32dc36607864e6bb6d33052c2d56.jpg" }
     ];
 
-    // ===== EMBELLISHMENTS: removed emb2 and emb5, keeping only 6 designs =====
+    // EMBELLISHMENTS (6 designs)
     const designAssets = [
         { id: "emb1", name: "Design 1", imgSrc: "https://i.postimg.cc/ydMjVzmW/ei-1776749686700-removebg-preview.png" },
         { id: "emb3", name: "Design 3", imgSrc: "https://i.postimg.cc/sDRmqsfT/ei-1776749699760-removebg-preview.png" },
@@ -407,7 +406,6 @@
     let loadedDesigns = {};
     let designLoadStatus = {};
 
-    // Preload all designs
     function loadDesignImages() {
         return Promise.all(designAssets.map(design => {
             return new Promise((resolve) => {
@@ -420,8 +418,7 @@
                     drawCanvas();
                     resolve(true);
                 };
-                img.onerror = (err) => {
-                    console.warn(`Failed to load ${design.id}: ${design.imgSrc}`);
+                img.onerror = () => {
                     const fallbackCanvas = document.createElement('canvas');
                     fallbackCanvas.width = 100;
                     fallbackCanvas.height = 100;
@@ -723,8 +720,8 @@
         }
     }
 
-    // ✅ GOOGLE SHEETS WEB APP URL ADDED HERE
-    const GOOGLE_SHEETS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycby0wNTpwCu7Drt93FzRKldhcsoOC48_s0e8gCh9Pg_KXdHUXd8hqlsKrfe7596WG9eHVA/exec";
+    // ✅ NEW Google Sheets Web App URL (replaced)
+    const GOOGLE_SHEETS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbw_JhynY5PEd5wUynkqrCJjMnRThkC9t4WsBpD7fNQgPDjgtU9Y5RTxe8XK5DQ7O9Ov/exec";
 
     async function sendToGoogleSheets() {
         const shirtName = shirtImages[currentShirtIndex].name;
@@ -732,17 +729,33 @@
             { type: 'text', content: obj.text, font: obj.fontFamily, size: obj.fontSize, color: obj.color, position: { x: Math.round(obj.x), y: Math.round(obj.y) } } :
             { type: 'design', designId: obj.designId, position: { x: Math.round(obj.x), y: Math.round(obj.y) }, size: { w: obj.width, h: obj.height } }
         );
-        const payload = { timestamp: new Date().toISOString(), shirtColor: shirtName, customization: elements, totalElements: objects.length };
-        if (!GOOGLE_SHEETS_WEBAPP_URL) {
-            alert("✨ Preview:\n" + JSON.stringify(payload, null, 2) + "\n\nSet web app URL to enable Google Sheets.");
-            console.log(payload);
-            return;
+        const payload = { 
+            timestamp: new Date().toISOString(), 
+            shirtColor: shirtName, 
+            customization: elements, 
+            totalElements: objects.length 
+        };
+        
+        try {
+            const response = await fetch(GOOGLE_SHEETS_WEBAPP_URL, {
+                method: 'POST',
+                mode: 'cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (response.ok) {
+                alert("✅ Your masterpiece has been sent to AM Studio! Check your Google Sheet.");
+            } else {
+                const errorText = await response.text();
+                alert("⚠️ Server responded with error: " + errorText + "\n\nYour data has been logged to console.");
+                console.log("Order data:", payload);
+            }
+        } catch (err) {
+            alert("❌ Failed to send: " + err.message + "\n\nPlease check your Apps Script deployment.\n\n📦 Order data saved to clipboard and console.");
+            console.error("Fetch error:", err);
+            console.log("Order data:", payload);
+            navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
         }
-        try { 
-            await fetch(GOOGLE_SHEETS_WEBAPP_URL, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); 
-            alert("✅ Your masterpiece has been sent to AM Studio! Check your Google Sheet.");
-        } 
-        catch(err) { alert("❌ Error sending data: " + err.message); }
     }
 
     function initUI() {
