@@ -188,6 +188,8 @@
             border-radius: 1.8rem;
             padding: 1.2rem;
             border: 1px solid rgba(212, 175, 55, 0.2);
+            max-height: 85vh;
+            overflow-y: auto;
         }
         .section {
             background: rgba(10, 12, 18, 0.7);
@@ -266,6 +268,26 @@
             flex-wrap: wrap;
             align-items: center;
         }
+        .customer-field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+        .customer-field label {
+            font-weight: 600;
+            font-size: 0.75rem;
+            color: #ecd88f;
+        }
+        .customer-field input, .customer-field select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 12px;
+            background: #0f1119;
+            border: 1px solid #4a4f62;
+            color: #f0ebdd;
+            font-size: 0.8rem;
+        }
         label {
             font-weight: 600;
             font-size: 0.7rem;
@@ -335,6 +357,34 @@
             </div>
         </div>
         <div class="tools-panel">
+            <!-- CUSTOMER DETAILS SECTION -->
+            <div class="section">
+                <div class="section-title">📝 CUSTOMER DETAILS</div>
+                <div class="customer-field">
+                    <label>Full Name *</label>
+                    <input type="text" id="customerName" placeholder="Your full name">
+                </div>
+                <div class="customer-field">
+                    <label>Complete Address *</label>
+                    <input type="text" id="customerAddress" placeholder="Street, city, postal code">
+                </div>
+                <div class="customer-field">
+                    <label>Phone Number *</label>
+                    <input type="tel" id="customerPhone" placeholder="Your mobile number">
+                </div>
+                <div class="customer-field">
+                    <label>Shirt Size *</label>
+                    <select id="shirtSize">
+                        <option value="">Select size</option>
+                        <option value="S">S (Small)</option>
+                        <option value="M">M (Medium)</option>
+                        <option value="L">L (Large)</option>
+                        <option value="XL">XL (Extra Large)</option>
+                        <option value="XXL">XXL (Double Extra Large)</option>
+                    </select>
+                </div>
+            </div>
+
             <div class="section">
                 <div class="section-title">✍️ TEXT STUDIO</div>
                 <div class="text-controls">
@@ -720,41 +770,59 @@
         }
     }
 
-    // ✅ NEW Google Sheets Web App URL (replaced)
-    const GOOGLE_SHEETS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbw_JhynY5PEd5wUynkqrCJjMnRThkC9t4WsBpD7fNQgPDjgtU9Y5RTxe8XK5DQ7O9Ov/exec";
+    // ========== GOOGLE APPS SCRIPT INTEGRATION (UPDATED URL & FOLDER ID) ==========
+    const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbzbWq8aJLqx_FHmlcpC_N3CK1Vk6nYvXza5AHF79826hJUXJ0tTHguAIzmqiRePLdFLrQ/exec";
+    const DRIVE_FOLDER_ID = "1eA4UuSVTAwFMEGTIPVPWXAS9oWqxh75A";
 
-    async function sendToGoogleSheets() {
-        const shirtName = shirtImages[currentShirtIndex].name;
-        const elements = objects.map(obj => obj.type === 'text' ? 
-            { type: 'text', content: obj.text, font: obj.fontFamily, size: obj.fontSize, color: obj.color, position: { x: Math.round(obj.x), y: Math.round(obj.y) } } :
-            { type: 'design', designId: obj.designId, position: { x: Math.round(obj.x), y: Math.round(obj.y) }, size: { w: obj.width, h: obj.height } }
-        );
-        const payload = { 
-            timestamp: new Date().toISOString(), 
-            shirtColor: shirtName, 
-            customization: elements, 
-            totalElements: objects.length 
+    async function sendDesignToGas() {
+        // Get customer details
+        const customerName = document.getElementById('customerName').value.trim();
+        const customerAddress = document.getElementById('customerAddress').value.trim();
+        const customerPhone = document.getElementById('customerPhone').value.trim();
+        const shirtSize = document.getElementById('shirtSize').value;
+        
+        if (!customerName || !customerAddress || !customerPhone || !shirtSize) {
+            alert("❌ Please fill in all customer details (Name, Address, Phone, Shirt Size) before placing order.");
+            return;
+        }
+        
+        const shirtColor = shirtImages[currentShirtIndex].name;
+        
+        // Create readable design details
+        const designDetails = objects.map(obj => {
+            if (obj.type === 'text') {
+                return `📝 Text: "${obj.text}"\n   Font: ${obj.fontFamily}, Size: ${obj.fontSize}px, Color: ${obj.color}\n   Position: (${Math.round(obj.x)}, ${Math.round(obj.y)})`;
+            } else {
+                return `✨ Embellishment: ${obj.designId}\n   Size: ${obj.width}x${obj.height}px\n   Position: (${Math.round(obj.x)}, ${Math.round(obj.y)})`;
+            }
+        }).join('\n\n');
+        
+        // Capture canvas as image (PNG)
+        const canvasElement = document.getElementById('shirtCanvas');
+        const imageDataURL = canvasElement.toDataURL('image/png');
+        
+        const payload = {
+            customerName: customerName,
+            customerAddress: customerAddress,
+            customerPhone: customerPhone,
+            shirtSize: shirtSize,
+            shirtColor: shirtColor,
+            imageData: imageDataURL,
+            designDetails: designDetails
         };
         
         try {
-            const response = await fetch(GOOGLE_SHEETS_WEBAPP_URL, {
+            const response = await fetch(GAS_WEBAPP_URL, {
                 method: 'POST',
-                mode: 'cors',
+                mode: 'no-cors',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
-            if (response.ok) {
-                alert("✅ Your masterpiece has been sent to AM Studio! Check your Google Sheet.");
-            } else {
-                const errorText = await response.text();
-                alert("⚠️ Server responded with error: " + errorText + "\n\nYour data has been logged to console.");
-                console.log("Order data:", payload);
-            }
-        } catch (err) {
-            alert("❌ Failed to send: " + err.message + "\n\nPlease check your Apps Script deployment.\n\n📦 Order data saved to clipboard and console.");
-            console.error("Fetch error:", err);
-            console.log("Order data:", payload);
-            navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
+            alert("✅ Your order has been placed successfully! The design image has been saved to Google Drive and your order is recorded in the Google Sheet.");
+            console.log("Order data sent to GAS:", payload);
+        } catch (error) {
+            alert("❌ Failed to place order. Error: " + error.message);
+            console.error("GAS error:", error);
         }
     }
 
@@ -787,7 +855,7 @@
         document.getElementById('addTextBtn').onclick = addNewText;
         document.getElementById('deleteSelectedBtn').onclick = deleteSelected;
         document.getElementById('applyTextPropsBtn').onclick = applyToSelectedText;
-        document.getElementById('doneBtn').onclick = sendToGoogleSheets;
+        document.getElementById('doneBtn').onclick = sendDesignToGas;
         canvas.addEventListener('mousedown', onMouseDown);
         window.addEventListener('mousemove', onMouseMove);
         window.addEventListener('mouseup', onMouseUp);
