@@ -723,7 +723,9 @@
         }
     }
 
-    const GOOGLE_SHEETS_WEBAPP_URL = "";
+    // ✅ GOOGLE SHEETS WEB APP URL ADDED HERE
+    const GOOGLE_SHEETS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycby0wNTpwCu7Drt93FzRKldhcsoOC48_s0e8gCh9Pg_KXdHUXd8hqlsKrfe7596WG9eHVA/exec";
+
     async function sendToGoogleSheets() {
         const shirtName = shirtImages[currentShirtIndex].name;
         const elements = objects.map(obj => obj.type === 'text' ? 
@@ -736,8 +738,11 @@
             console.log(payload);
             return;
         }
-        try { await fetch(GOOGLE_SHEETS_WEBAPP_URL, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); alert("✅ Sent!"); } 
-        catch(err) { alert("Error: "+err.message); }
+        try { 
+            await fetch(GOOGLE_SHEETS_WEBAPP_URL, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); 
+            alert("✅ Your masterpiece has been sent to AM Studio! Check your Google Sheet.");
+        } 
+        catch(err) { alert("❌ Error sending data: " + err.message); }
     }
 
     function initUI() {
