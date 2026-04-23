@@ -257,6 +257,31 @@
             max-height: 100%;
             object-fit: contain;
         }
+        .upload-area {
+            margin-top: 15px;
+            border-top: 1px dashed #4a4f62;
+            padding-top: 12px;
+        }
+        .upload-area .ctrl-row {
+            margin-bottom: 8px;
+        }
+        .upload-preview {
+            width: 80px;
+            height: 80px;
+            background: #1e1f2c;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            margin-top: 8px;
+            border: 1px solid #4a4f62;
+        }
+        .upload-preview img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
         .text-controls {
             display: flex;
             flex-direction: column;
@@ -404,6 +429,26 @@
             <div class="section">
                 <div class="section-title">✨ EMBELLISHMENTS (click to add)</div>
                 <div class="design-thumbs" id="designList"></div>
+                <!-- UPLOAD YOUR OWN IMAGE SECTION (fixed bg removal) -->
+                <div class="upload-area">
+                    <div class="ctrl-row">
+                        <label>📤 Upload your own image:</label>
+                        <input type="file" id="uploadImageInput" accept="image/png, image/jpeg, image/jpg, image/webp" style="display:none;">
+                        <button id="selectImageBtn" style="background:#2f3547;">Choose Image</button>
+                    </div>
+                    <div class="ctrl-row">
+                        <label>Remove background (white/light)</label>
+                        <input type="checkbox" id="removeBgCheckbox">
+                    </div>
+                    <div class="ctrl-row">
+                        <label>Tolerance: <span id="toleranceValue">200</span></label>
+                        <input type="range" id="toleranceSlider" min="0" max="255" value="200" step="1">
+                    </div>
+                    <div class="upload-preview" id="uploadPreview" style="display:none;">
+                        <img id="previewImg" alt="Preview">
+                    </div>
+                    <button id="addUploadedBtn" style="margin-top: 8px; width:100%; background:#2f3547;" disabled>➕ Add to Canvas</button>
+                </div>
             </div>
             <div class="section">
                 <div class="section-title">📐 DESIGN SIZE ADJUST</div>
@@ -420,7 +465,7 @@
             </div>
         </div>
     </div>
-    <footer>🖱️ Drag any element • select to edit • resize designs with slider</footer>
+    <footer>🖱️ Drag any element • select to edit • resize designs with slider • upload your own images</footer>
 </div>
 
 <script>
@@ -456,6 +501,11 @@
     let loadedDesigns = {};
     let designLoadStatus = {};
 
+    // For uploaded images
+    let pendingUploadedImageData = null; // stores the processed image data URL
+    let pendingUploadedImageObj = null;   // Image object ready to add
+    let currentRawImageData = null;       // original file dataURL before processing
+
     function loadDesignImages() {
         return Promise.all(designAssets.map(design => {
             return new Promise((resolve) => {
@@ -490,6 +540,106 @@
                 img.src = design.imgSrc;
             });
         }));
+    }
+
+    // IMPROVED BACKGROUND REMOVAL (makes white/light pixels transparent)
+    function removeBackground(imageDataURL, tolerance) {
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.crossOrigin = "Anonymous";
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const w = img.width, h = img.height;
+                canvas.width = w;
+                canvas.height = h;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, w, h);
+                const imageData = ctx.getImageData(0, 0, w, h);
+                const data = imageData.data;
+                for (let i = 0; i < data.length; i += 4) {
+                    const r = data[i];
+                    const g = data[i+1];
+                    const b = data[i+2];
+                    // Calculate brightness (simple average)
+                    const brightness = (r + g + b) / 3;
+                    // If brightness is above tolerance, make transparent
+                    if (brightness >= tolerance) {
+                        data[i+3] = 0;
+                    }
+                }
+                ctx.putImageData(imageData, 0, 0);
+                const newDataURL = canvas.toDataURL('image/png');
+                resolve(newDataURL);
+            };
+            img.src = imageDataURL;
+        });
+    }
+
+    // Function to process image with current settings and update preview
+    async function processAndPreview() {
+        if (!currentRawImageData) return;
+        const removeBg = document.getElementById('removeBgCheckbox').checked;
+        const tolerance = parseInt(document.getElementById('toleranceSlider').value, 10);
+        document.getElementById('toleranceValue').innerText = tolerance;
+        
+        let finalDataURL = currentRawImageData;
+        if (removeBg) {
+            finalDataURL = await removeBackground(currentRawImageData, tolerance);
+        }
+        pendingUploadedImageData = finalDataURL;
+        const img = new Image();
+        img.onload = () => {
+            pendingUploadedImageObj = img;
+            const previewDiv = document.getElementById('uploadPreview');
+            const previewImg = document.getElementById('previewImg');
+            previewImg.src = finalDataURL;
+            previewDiv.style.display = 'flex';
+            document.getElementById('addUploadedBtn').disabled = false;
+        };
+        img.src = finalDataURL;
+    }
+
+    // Handle image upload
+    async function handleImageUpload(file) {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            currentRawImageData = e.target.result;
+            await processAndPreview();
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // Add uploaded image to canvas as a design element
+    function addUploadedImageToCanvas() {
+        if (!pendingUploadedImageObj || !pendingUploadedImageData) {
+            alert('Please upload an image first.');
+            return;
+        }
+        const customId = 'custom_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+        loadedDesigns[customId] = pendingUploadedImageObj;
+        const defaultSize = parseInt(document.getElementById('designSizeSlider').value, 10);
+        const newDesign = {
+            id: nextId++,
+            type: 'design',
+            designId: customId,
+            x: canvas.width/2 - defaultSize/2,
+            y: canvas.height/2 - defaultSize/2,
+            width: defaultSize,
+            height: defaultSize,
+            isCustom: true
+        };
+        objects.push(newDesign);
+        selectedId = newDesign.id;
+        refreshCanvas();
+        updateUIForSelected();
+        // Clear pending
+        pendingUploadedImageData = null;
+        pendingUploadedImageObj = null;
+        currentRawImageData = null;
+        document.getElementById('uploadPreview').style.display = 'none';
+        document.getElementById('addUploadedBtn').disabled = true;
+        document.getElementById('uploadImageInput').value = '';
     }
 
     function drawShirtWithFit() {
@@ -763,19 +913,18 @@
             labelSpan.innerHTML = `✒️ Text: "${obj.text.substring(0,22)}"`;
             syncTextInputsWithSelected();
         } else {
-            labelSpan.innerHTML = `🏷️ Embellishment: ${obj.designId}`;
+            labelSpan.innerHTML = `🏷️ ${obj.isCustom ? 'Uploaded' : 'Embellishment'}`;
             document.getElementById('textContentInput').value = "";
             document.getElementById('designSizeSlider').value = obj.width;
             document.getElementById('designSizeNumber').value = obj.width;
         }
     }
 
-    // ========== GOOGLE APPS SCRIPT INTEGRATION (UPDATED URL & FOLDER ID) ==========
+    // ========== GOOGLE APPS SCRIPT INTEGRATION ==========
     const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbzbWq8aJLqx_FHmlcpC_N3CK1Vk6nYvXza5AHF79826hJUXJ0tTHguAIzmqiRePLdFLrQ/exec";
     const DRIVE_FOLDER_ID = "1eA4UuSVTAwFMEGTIPVPWXAS9oWqxh75A";
 
     async function sendDesignToGas() {
-        // Get customer details
         const customerName = document.getElementById('customerName').value.trim();
         const customerAddress = document.getElementById('customerAddress').value.trim();
         const customerPhone = document.getElementById('customerPhone').value.trim();
@@ -788,16 +937,14 @@
         
         const shirtColor = shirtImages[currentShirtIndex].name;
         
-        // Create readable design details
         const designDetails = objects.map(obj => {
             if (obj.type === 'text') {
                 return `📝 Text: "${obj.text}"\n   Font: ${obj.fontFamily}, Size: ${obj.fontSize}px, Color: ${obj.color}\n   Position: (${Math.round(obj.x)}, ${Math.round(obj.y)})`;
             } else {
-                return `✨ Embellishment: ${obj.designId}\n   Size: ${obj.width}x${obj.height}px\n   Position: (${Math.round(obj.x)}, ${Math.round(obj.y)})`;
+                return `✨ ${obj.isCustom ? 'Uploaded Image' : 'Embellishment'}: ${obj.designId}\n   Size: ${obj.width}x${obj.height}px\n   Position: (${Math.round(obj.x)}, ${Math.round(obj.y)})`;
             }
         }).join('\n\n');
         
-        // Capture canvas as image (PNG)
         const canvasElement = document.getElementById('shirtCanvas');
         const imageDataURL = canvasElement.toDataURL('image/png');
         
@@ -856,6 +1003,28 @@
         document.getElementById('deleteSelectedBtn').onclick = deleteSelected;
         document.getElementById('applyTextPropsBtn').onclick = applyToSelectedText;
         document.getElementById('doneBtn').onclick = sendDesignToGas;
+        
+        // Image upload handlers with real-time processing
+        const selectImageBtn = document.getElementById('selectImageBtn');
+        const fileInput = document.getElementById('uploadImageInput');
+        selectImageBtn.onclick = () => fileInput.click();
+        fileInput.onchange = (e) => {
+            if (e.target.files && e.target.files[0]) {
+                handleImageUpload(e.target.files[0]);
+            }
+        };
+        // Reprocess when checkbox or tolerance changes
+        document.getElementById('removeBgCheckbox').onchange = () => {
+            if (currentRawImageData) processAndPreview();
+        };
+        document.getElementById('toleranceSlider').oninput = () => {
+            document.getElementById('toleranceValue').innerText = document.getElementById('toleranceSlider').value;
+            if (currentRawImageData && document.getElementById('removeBgCheckbox').checked) {
+                processAndPreview();
+            }
+        };
+        document.getElementById('addUploadedBtn').onclick = addUploadedImageToCanvas;
+        
         canvas.addEventListener('mousedown', onMouseDown);
         window.addEventListener('mousemove', onMouseMove);
         window.addEventListener('mouseup', onMouseUp);
